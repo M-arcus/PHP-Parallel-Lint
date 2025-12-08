@@ -50,15 +50,15 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Download PHAR file
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: parallel-lint-phar
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@44454db4f0199b8b9685a5d763dc37cbf79108e1  # 2.36.0
         with:
           php-version: ${{ matrix.php }}
           ini-values: error_reporting=-1, display_errors=On, display_startup_errors=On, zend.assertions=1
@@ -76,12 +76,12 @@ jobs:
 
     steps:
       - name: Download PHAR file
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           name: parallel-lint-phar
 
       - name: Draft Release
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v3.0.0
         with:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
