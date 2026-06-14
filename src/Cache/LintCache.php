@@ -180,90 +180,11 @@ class LintCache
             return;
         }
 
-        $lockFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR
-            . 'parallel-lint-' . md5($this->cacheFilePath) . '.lock';
-        $lockHandle = fopen($lockFile, 'cb');
-        if ($lockHandle === false) {
-            return;
-        }
+        $this->allEntries[$this->cacheKey] = $this->entries;
 
-        if (!flock($lockHandle, LOCK_EX)) {
-            fclose($lockHandle);
-            return;
-        }
-
-        $this->mergeFromDisk();
-
-        // Merge disk entries for the active key, with in-memory values taking precedence
-        $diskEntries = array();
-        if (isset($this->allEntries[$this->cacheKey]) && is_array($this->allEntries[$this->cacheKey])) {
-            $diskEntries = $this->allEntries[$this->cacheKey];
-        }
-        $this->allEntries[$this->cacheKey] = array_merge($diskEntries, $this->entries);
-
-        $json = json_encode($this->allEntries);
-        if ($json !== false && $this->writeCacheFile($json)) {
+        $json = json_encode($this->allEntries, JSON_THROW_ON_ERROR);
+        if ($json !== false && file_put_contents($this->cacheFilePath, $json) !== false) {
             $this->dirty = false;
         }
-
-        flock($lockHandle, LOCK_UN);
-        fclose($lockHandle);
-    }
-
-    /**
-     * Re-read cache file from disk to merge entries from concurrent runs
-     */
-    private function mergeFromDisk()
-    {
-        if (!is_file($this->cacheFilePath)) {
-            return;
-        }
-
-        $contents = file_get_contents($this->cacheFilePath);
-        if ($contents === false) {
-            return;
-        }
-
-        $diskData = json_decode($contents, true);
-        if (is_array($diskData)) {
-            $this->allEntries = $diskData;
-        }
-    }
-
-    /**
-     * Atomically write cache data to disk via a temp file
-     *
-     * @param string $json
-     * @return bool
-     */
-    private function writeCacheFile($json)
-    {
-        $tmpFile = $this->cacheFilePath . '.' . getmypid() . '.tmp';
-
-        if (file_put_contents($tmpFile, $json, LOCK_EX) === false) {
-            return false;
-        }
-
-        if (rename($tmpFile, $this->cacheFilePath)) {
-            return true;
-        }
-
-        // Fallback for Windows where rename() fails if target exists
-        if (file_exists($this->cacheFilePath) && !unlink($this->cacheFilePath)) {
-            unlink($tmpFile);
-            return false;
-        }
-
-        if (rename($tmpFile, $this->cacheFilePath)) {
-            return true;
-        }
-
-        if (copy($tmpFile, $this->cacheFilePath)) {
-            unlink($tmpFile);
-            return true;
-        }
-
-        unlink($tmpFile);
-        return false;
     }
 }
