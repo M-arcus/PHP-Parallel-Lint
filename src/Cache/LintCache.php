@@ -180,7 +180,8 @@ class LintCache
             return;
         }
 
-        $lockFile = $this->cacheFilePath . '.lock';
+        $lockFile = sys_get_temp_dir() . DIRECTORY_SEPARATOR
+            . 'parallel-lint-' . md5($this->cacheFilePath) . '.lock';
         $lockHandle = fopen($lockFile, 'cb');
         if ($lockHandle === false) {
             return;
